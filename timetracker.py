@@ -8,9 +8,19 @@ class TimeTracker(object):
         self.root = root
         # create the label
         label1 = Label(root, 
-            text="Start new activity")
+            text="Task")
+        start_button = Button(root)
+        start_button.config(
+            text='Start Tracking'
+        )
         # position the label on the form and show it
-        label1.grid(row=0, column=0)
+        main_canvas = Canvas(root)
+        main_canvas.config(
+            width=600,
+            height=270,
+            bg='white'
+        )
+        main_canvas.grid(row=1, column=0)
         """# create the canvas
         canvas1 = Canvas(root, width=420, height=200)
         # position the canvas on the form and show it
@@ -26,7 +36,6 @@ class TimeTracker(object):
 root = Tk()
 # window title text
 root.title("Matador Time Tracker")
-root.size(width=600, height=270)
 
 # be different, default would be light gray
 root.tk_bisque()
