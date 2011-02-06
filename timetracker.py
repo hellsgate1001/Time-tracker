@@ -1,36 +1,86 @@
-# using grid() to position a label and a canvas
-# tested with Python24   vegaseat    09jun2005
+from Tkinter import*
 
-from Tkinter import *
 
-class TimeTracker(object):
-    def __init__(self, root):
-        self.root = root
-        # create the label
-        label1 = Label(root, 
-            text="Start new activity")
-        # position the label on the form and show it
-        label1.grid(row=0, column=0)
-        """# create the canvas
-        canvas1 = Canvas(root, width=420, height=200)
-        # position the canvas on the form and show it
-        canvas1.grid(row=1,column=0)
-        # now create the recangle on the canvas
-        canvas1.create_rectangle(15, 10, 400, 150, outline='red', fill='gray80')
-        # position a text at x=100, y=90 so it shows in the rectangle center
-        font1 = ('times', 20, 'bold')
-        canvas1.create_text(100, 90, anchor=SW, text="Hello World!",
-            font=font1, fill='red')"""
-        
-# create the window's form/root
+class App(Frame):
+    def __init__(self, master=None):
+        Frame.__init__(self, master)
+        self.config(
+            width=500,
+            height=200
+        )
+        self.pack()
+        # grid_propagate makes sure the frame keeps the dims set above
+        self.grid_propagate(0)
+        self.create_widgets()
+
+    def create_widgets(self):
+        # Initial form has three controls:
+        # 1. Task title
+        # 2. Project name
+        # 3. Staart self
+        task_label = Label(self)
+        task_label.config(
+            text='Your task',
+            anchor='sw'
+        )
+        task_label.grid(
+            row=0,
+            sticky=N+S+E+W,
+            padx=15
+        )
+
+        task_input = Entry(self)
+        task_input.config(
+            text='',
+        )
+        task_input.grid(
+            row=1,
+            padx=15
+        )
+
+        project_label = Label(self)
+        project_label.config(
+            text='Project',
+            anchor='sw'
+        )
+        project_label.grid(
+            row=0,
+            column=1,
+            sticky=N+S+E+W,
+            padx=15
+        )
+
+        option_list = ('Begg', 'Betfair', 'PASMA')
+        project_input = OptionMenu(self, StringVar(), *option_list)
+        project_input.config(
+            width=10
+        )
+        project_input.grid(
+            row=1,
+            column=1,
+            padx=15
+        )
+
+        start_button = Button(self)
+        start_button.config(
+            text='Start Task'
+        )
+        start_button.grid(
+            row=1,
+            column=4,
+            padx=15
+        )
+
+        quit_button = Button(self)
+        quit_button.config(
+            text='Quit',
+            command=self.quit
+        )
+        quit_button.grid()
+
+
 root = Tk()
-# window title text
-root.title("Matador Time Tracker")
-root.size(width=600, height=270)
-
-# be different, default would be light gray
-root.tk_bisque()
-# call the class
-app  = TimeTracker(root)
-# run program
-root.mainloop()
+timetracker = App(master=root)
+timetracker.master.title("Matador Time Tracking")
+timetracker.mainloop()
+print timetracker.grid_size()
