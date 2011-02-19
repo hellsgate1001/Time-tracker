@@ -7,9 +7,6 @@ import logging
 from Crypto.Cipher import AES
 
 
-engine = create_engine('mysql://tracker:X6AbqNhiulEyMHo5F71L@79.125.121.165/timesheet')
-Session = sessionmaker(bind=engine)
-session = Session()
 Base = declarative_base()
 
 BLOCK_SIZE = 32
@@ -54,12 +51,15 @@ class User(Base):
     def __repr__(self):
         return "<User('%s','%s','%s')>" % (self.email, self.first_name, self.surname)
 
-    def check_password(self, password):
-        password_to_check = self.encobj.encrypt(pad(password))
-        if password_to_check.encode('hex') == self.password:
-            print 'matched'
-        else:
-            print 'no match'
+    def check_password(self, password_to_check):
+        password_to_check = self.encobj.encrypt(pad(password_to_check))
+        return password_to_check.encode('hex') == self.password
+
+
+def get_all_projects():
+    q = session.query(Project)
+    projects = q.all()
+    return projects
 
 
 class Project(Base):
