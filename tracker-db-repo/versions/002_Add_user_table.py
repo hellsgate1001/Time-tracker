@@ -4,13 +4,18 @@ from migrate.changeset import *
 
 meta = MetaData()
 
+user_category = Table('user_category', meta,
+    Column('id', Integer, primary_key=True),
+    Column('name', String(40))
+)
+
 user = Table('user', meta,
     Column('id', Integer, primary_key=True),
     Column('email', String(255)),
     Column('first_name', String(40)),
     Column('surname', String(40)),
     Column('password', String(255)),
-    Column('user_category', Integer),
+    Column('user_category', Integer, ForeignKey('user_category.id')),
 )
 
 def upgrade(migrate_engine):

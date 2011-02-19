@@ -4,11 +4,17 @@ from migrate import *
 
 meta = MetaData()
 
+project = Table('project', meta,
+    Column('id', Integer, primary_key=True),
+    Column('name', String(50))
+)
+
 task = Table('task', meta,
     Column('id', Integer, primary_key=True),
     Column('name', String(255)),
-    Column('project', Integer)
+    Column('project', Integer, ForeignKey('project.id'))
 )
+
 def upgrade(migrate_engine):
     # Upgrade operations go here. Don't create your own engine; bind migrate_engine
     # to your metadata
