@@ -71,6 +71,7 @@ class LoginForm(Frame):
             if u[0].check_password(password):
                 self.parent.user = u[0]
                 self.grid_remove()
+                print 'found'
             else:
                 print 'no match'
 

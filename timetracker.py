@@ -1,12 +1,17 @@
 from models import *
 from timetrackerui import *
 from datetime import datetime
+import os
+
+
+BASE_FPATH = os.getcwd() + '/'
 
 root = Tk()
-root.session = Session()
-
-timetracker = LoginForm(parent=root)
-timetracker.pack()
+#root.session = session
+root.ini_file = BASE_FPATH + 'settings.ini'
+root.ini = {}
+app = TimeTracker(root)
+app.pack()
 root.mainloop()
 
 """
