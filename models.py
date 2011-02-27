@@ -5,6 +5,14 @@ from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 import logging
 from Crypto.Cipher import AES
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm.query import Query
+
+
+engine = create_engine('mysql://tracker:X6AbqNhiulEyMHo5F71L@79.125.121.165/timesheet')
+Session = sessionmaker(bind=engine)
+session = Session()
 
 
 Base = declarative_base()
@@ -40,7 +48,7 @@ class User(Base):
 
     encobj = AES.new(salt, AES.MODE_ECB)
 
-    def __init__(self, email, first_name, surname, password, user_category):
+    def __init__(self, email='', first_name='', surname='', password='', user_category=0):
         encrypted_password = self.encobj.encrypt(pad(password))
         self.email = email
         self.first_name = first_name
