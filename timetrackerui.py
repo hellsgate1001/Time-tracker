@@ -38,7 +38,7 @@ class LoginPage(Frame):
 
         self.quit_button = Button(self)
         self.quit_button.config(text='Quit', height=2, width=12,
-            command=self.quit())
+            command=self.root.quit_app)
         self.quit_button.grid(row=3, column=1, pady=4)
 
     def _check_login(self, event, email, password):
@@ -211,6 +211,13 @@ class TimeTracker(Frame):
             line_details = line.split('##')
             self.root.ini[line_details[0]] = line_details[1]
         ini_file.close()
+
+    def quit_app(self):
+        """
+        When quitting the app, write the ini settings to file
+        """
+        self.set_ini()
+        self.root.quit()
 
 
 class LoginForm2(Frame):
