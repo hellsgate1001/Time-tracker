@@ -16,7 +16,8 @@ class LoginPage(Frame):
         self.email_label.grid(row=1)
 
         self.email_input = Entry(self)
-        self.email_input.config(text='')
+        if 'useremail' in self.root.root.ini:
+            self.email_input.insert(0, self.root.root.ini['useremail'])
         self.email_input.grid(row=2, padx=13)
 
         self.password_label = Label(self)
@@ -170,6 +171,7 @@ class TimeTracker(Frame):
     def __init__(self, root):
         Frame.__init__(self, root)
         self.root = root
+        self.get_ini()
         self.pages = self._add_pages()
         self.pages['login'].grid(row=0, column=0, columnspan=2)
         self.buttons['login'] = Button(self, text='Login', command=self.showlogin).grid(row=1, column=1)
@@ -197,9 +199,17 @@ class TimeTracker(Frame):
     def set_ini(self):
         ini_file = open(self.root.ini_file, 'w')
         for i in self.root.ini.keys():
-            ini_file.write(i + '@@' + self.root.ini[i])
+            ini_file.write(i + '##' + self.root.ini[i])
             ini_file.write('\n')
 
+        ini_file.close()
+
+    def get_ini(self):
+        ini_file = open(self.root.ini_file, 'rb')
+        self.root.ini = {}
+        for line in ini_file:
+            line_details = line.split('##')
+            self.root.ini[line_details[0]] = line_details[1]
         ini_file.close()
 
 
