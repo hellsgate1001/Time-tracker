@@ -4,7 +4,7 @@ from models import session
 from Crypto.Cipher import AES
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
-
+from datetime import datetime
 
 
 class LoginPage(Frame):
@@ -17,24 +17,30 @@ class LoginPage(Frame):
 
         self.email_input = Entry(self)
         if 'useremail' in self.root.root.ini:
-            self.email_input.insert(0, self.root.root.ini['useremail'])
+            self.email_input.insert(0, self.root.root.ini['useremail'].strip())
+            #self.root.bind_class(self.email_input, '<FocusIn>', self.highlightemail)
         self.email_input.grid(row=2, padx=13)
 
         self.password_label = Label(self)
         self.password_label.config(text='Password')
         self.password_label.grid(row=1, column=1)
 
+        def cb_handler(event, self=self):
+            return self._check_login(event, self.email_input.get(),
+                self.password_input.get())
+
         self.password_input =Entry(self)
         self.password_input.config(text='', show='*')
         self.password_input.grid(row=2, column=1, padx=13)
+        self.password_input.bind("<Return>", cb_handler)
+        self.password_input.bind("<KP_Enter>", cb_handler)
 
         self.continue_button = Button(self)
         self.continue_button.config(text='Log In', height=2, width=12)
         self.continue_button.grid(row=3, pady=4)
-        def cb_handler(event, self=self):
-            return self._check_login(event, self.email_input.get(),
-                self.password_input.get())
         self.continue_button.bind("<Button-1>", cb_handler)
+        self.continue_button.bind("<Return>", cb_handler)
+        self.continue_button.bind("<KP_Enter>", cb_handler)
 
         self.quit_button = Button(self)
         self.quit_button.config(text='Quit', height=2, width=12,
@@ -48,27 +54,22 @@ class LoginPage(Frame):
             print 'You forgot the password'
 
         q = session.query(User)
-        #q = self.root.root.session.query(User)
         u = q.filter(User.email==email)
 
         if u.count() == 1:
             if u[0].check_password(password):
-                """self.root.user = u[0]
-                self.grid_remove()
-                print 'found'"""
                 self.root.user = u[0]
                 self.grid_forget()
                 self.root.root.ini['useremail'] = email
                 self.root.set_ini()
-                """ini_file = open(self.root.root.ini_file, 'a')
-                ini_file.write(email)
-                ini_file.close()"""
                 self.root.addtask()
             else:
                 print 'no match'
 
 
 class AddTaskPage(Frame):
+    project_user_tasks = {}
+
     def __init__(self, root):
         Frame.__init__(self, root)
         self.root = root
@@ -110,6 +111,7 @@ class AddTaskPage(Frame):
             option_list.append(project.name)
 
         self.p_id = StringVar()
+        self.p_id.trace('w', self.project_change)
         self.project_input = OptionMenu(self, self.p_id, *option_list)
         self.project_input.config(
             width=10
@@ -130,13 +132,13 @@ class AddTaskPage(Frame):
             padx=15
         )
         def sb_handler(event, self=self):
-            return self._start_task(event, self.task_input.get(), self.project_input.get())
+            return self._start_task(event, self.task_input.get(), self.p_id.get())
         self.start_button.bind("<Button-1>", sb_handler)
 
         self.quit_button = Button(self)
         self.quit_button.config(
             text='Quit',
-            command=self.quit
+            command=self.root.quit_app
         )
         self.quit_button.grid()
 
@@ -151,18 +153,44 @@ class AddTaskPage(Frame):
         self.grid_forget()
         self.root.showlogin()
 
+    def project_change(self, name, index, mode):
+        project_name = self.p_id.get()
+        #project_q = session.query(Project)
+        project = session.query(Project).filter(Project.name==self.p_id.get())[0]
+        #task_q = session.query(Task)
+        # What tasks does this project have?
+        tasks = session.query(Task).filter(Task.project==project.id)
+
+        if tasks.count() > 0:
+            self._fill_tasks(tasks)
+
+        print "id - %s - %s" % (project.id, tasks.count())
+        print "%s" % (session.query(Task).filter(Task.project==project).as_scalar())
+
+    def _fill_tasks(self, tasks):
+        self.task_list = Listbox(self, height=tasks.count())
+        for task in tasks:
+            self.task_list.insert(END, task.name)
+        self.task_list.grid(row=1, column=0, pady=10)
+
     def _start_task(self, event, task, project):
         """
         Add a new task to the user_task table, checking if it exists first and
         creating it in the task table if necessary
         """
-        task_q = self.parent.session.query(Task)
-        tasks = task_q.filter(name=task).filter(project==project_obj.id)
-        project_q = self.parent.session.query(Project)
-        project_obj = project_q.filter(name==project)
-        task = Task(task, project_obj.id)
-        self.parent.session.add()
-        self.parent.session.commit()
+        project_q = session.query(Project)
+        project_obj = project_q.filter(Project.name==project)[0]
+        task_q = session.query(Task)
+        tasks = task_q.filter(Task.name==task).filter(Task.project==project_obj.id)
+        if tasks.count() == 0:
+            current_task = Task(task, project_obj.id)
+            session.add(current_task)
+            session.commit()
+        else:
+            current_task = tasks[0]
+        user_task = UserTask(self.root.user.id, current_task.id)
+        session.add(user_task)
+        session.commit()
 
 class TimeTracker(Frame):
     pages = {}
@@ -197,10 +225,9 @@ class TimeTracker(Frame):
         return all_pages
 
     def set_ini(self):
-        ini_file = open(self.root.ini_file, 'w')
+        ini_file = open(self.root.ini_file, 'wb')
         for i in self.root.ini.keys():
             ini_file.write(i + '##' + self.root.ini[i])
-            ini_file.write('\n')
 
         ini_file.close()
 
@@ -217,6 +244,15 @@ class TimeTracker(Frame):
         When quitting the app, write the ini settings to file
         """
         self.set_ini()
+
+        # End any ongoing user task
+        user_tasks = session.query(UserTask).filter(UserTask.user==self.user.id).filter(UserTask.end==None)
+        if user_tasks.count() > 0:
+            for ut in user_tasks:
+                print "Found %s" % (ut.id)
+                ut.end = datetime.now()
+                session.add(ut)
+            session.commit()
         self.root.quit()
 
 
