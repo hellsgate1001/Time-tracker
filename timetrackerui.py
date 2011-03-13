@@ -69,6 +69,7 @@ class LoginPage(Frame):
 
 class AddTaskPage(Frame):
     project_user_tasks = {}
+    current_ut = 0
 
     def __init__(self, root):
         Frame.__init__(self, root)
@@ -122,18 +123,21 @@ class AddTaskPage(Frame):
             padx=15
         )
 
-        self.start_button = Button(self)
-        self.start_button.config(
-            text='Start Task'
+        self.task_button_text = StringVar()
+        self.task_button_text.set('Start Task')
+        self.task_button = Button(self)
+        self.task_button.config(
+            textvariable=self.task_button_text,
+            width=15
         )
-        self.start_button.grid(
+        self.task_button.grid(
             row=1,
             column=4,
             padx=15
         )
         def sb_handler(event, self=self):
-            return self._start_task(event, self.task_input.get(), self.p_id.get())
-        self.start_button.bind("<Button-1>", sb_handler)
+            return self._task_click(event, self.task_input.get(), self.p_id.get())
+        self.task_button.bind("<Button-1>", sb_handler)
 
         self.quit_button = Button(self)
         self.quit_button.config(
@@ -173,7 +177,22 @@ class AddTaskPage(Frame):
             self.task_list.insert(END, task.name)
         self.task_list.grid(row=1, column=0, pady=10)
 
-    def _start_task(self, event, task, project):
+    def _task_click(self, event, task, project):
+        if self.task_button_text.get() == 'Start Task':
+            self._start_task(task, project)
+        else:
+            self._end_task(task, project)
+
+    def _end_task(self, task, project):
+        ut = session.query(UserTask).get(self.current_ut)
+        ut.end = datetime.now()
+        session.flush()
+        self.current_ut = 0
+
+        # Update the text on the button
+        self.task_button_text.set('Start Task')
+
+    def _start_task(self, task, project):
         """
         Add a new task to the user_task table, checking if it exists first and
         creating it in the task table if necessary
@@ -191,6 +210,10 @@ class AddTaskPage(Frame):
         user_task = UserTask(self.root.user.id, current_task.id)
         session.add(user_task)
         session.commit()
+        self.current_ut = user_task.id
+
+        # Update the text on the button
+        self.task_button_text.set('End Task')
 
 class TimeTracker(Frame):
     pages = {}
@@ -249,7 +272,6 @@ class TimeTracker(Frame):
         user_tasks = session.query(UserTask).filter(UserTask.user==self.user.id).filter(UserTask.end==None)
         if user_tasks.count() > 0:
             for ut in user_tasks:
-                print "Found %s" % (ut.id)
                 ut.end = datetime.now()
                 session.add(ut)
             session.commit()
