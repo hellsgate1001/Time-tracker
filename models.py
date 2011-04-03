@@ -1,6 +1,4 @@
-from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey, DateTime
-#from sqlalchemy import Sequence
-#from sqlalchemy.orm import mapper
+from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey, DateTime, desc
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 import logging
@@ -63,6 +61,15 @@ class User(Base):
         password_to_check = self.encobj.encrypt(pad(password_to_check))
         return password_to_check.encode('hex') == self.password
 
+    def get_latest_task(self):
+        ut = session.query(UserTask)\
+            .filter(UserTask.user==self.id)\
+            .order_by(desc(UserTask.end_date))\
+            .limit(1)
+        if ut:
+            return ut[0]
+        return False
+
 
 def get_all_projects():
     q = session.query(Project)
@@ -104,13 +111,13 @@ class UserTask(Base):
     id = Column(Integer, primary_key=True)
     user = Column(Integer)
     task = Column(Integer)
-    start = Column(DateTime)
-    end = Column(DateTime)
+    start_date = Column(DateTime)
+    end_date = Column(DateTime)
 
     def __init__(self, user, task):
         self.user = user
         self.task = task
-        self.start = datetime.now()
+        self.start_date = datetime.now()
 
     def __repr__(self):
         return "<UserTask('%s','%s')>" % (str(self.user), str(self.task))
